@@ -187,6 +187,7 @@ export default class Ui {
        */
 
       attributes.playsinline = true;
+      attributes.controls = true;
 
       /**
        * Change event to be listened
@@ -205,6 +206,7 @@ export default class Ui {
        *
        * @type {boolean}
        */
+      attributes.controls = true;
 
       /**
        * Change event to be listened
