@@ -153,9 +153,15 @@ export default class Ui {
    */
   fillImage(url) {
     /**
-     * Check for a source extension to compose element correctly: video tag for mp4, img — for others
+     * Check for a source extension to compose element correctly: video tag for mp4, audio tag for mp3, img — for others
      */
-    const tag = /\.mp4$/.test(url) ? 'VIDEO' : 'IMG';
+    let tag = 'IMG';
+    if (/\.mp4$/.test(url)) {
+      tag = 'VIDEO';
+    }
+    if (/\.mp3$/.test(url)) {
+      tag = 'AUDIO';
+    }
 
     const attributes = {
       src: url,
@@ -175,14 +181,32 @@ export default class Ui {
      */
     if (tag === 'VIDEO') {
       /**
-       * Add attributes for playing muted mp4 as a gif
+       * Add attributes for playing mp4
        *
        * @type {boolean}
        */
-      attributes.autoplay = true;
-      attributes.loop = true;
-      attributes.muted = true;
+
       attributes.playsinline = true;
+      attributes.controls = true;
+
+      /**
+       * Change event to be listened
+       *
+       * @type {string}
+       */
+      eventName = 'loadeddata';
+    }
+
+    /**
+     * Update attributes and eventName if source is a mp3 audio
+     */
+    if (tag === 'AUDIO') {
+      /**
+       * Add attributes for playing muted mp3
+       *
+       * @type {boolean}
+       */
+      attributes.controls = true;
 
       /**
        * Change event to be listened
