@@ -179,9 +179,9 @@ export default class Ui {
        *
        * @type {boolean}
        */
-      attributes.autoplay = true;
-      attributes.loop = true;
-      attributes.muted = true;
+      attributes.autoplay = false;
+      attributes.loop = false;
+      attributes.muted = false;
       attributes.playsinline = true;
 
       /**
