@@ -1,3 +1,4 @@
+import { base64FromByteArray } from './base64';
 import buttonIcon from './svg/button-icon.svg';
 
 /**
@@ -13,8 +14,9 @@ export default class Ui {
    * @param {ImageConfig} ui.config - user config
    * @param {Function} ui.onSelectFile - callback for clicks on Select file button
    * @param {boolean} ui.readOnly - read-only mode flag
+   * @param {boolean} ui.optimizeImages - optimize images flag
    */
-  constructor({ api, config, onSelectFile, readOnly }) {
+  constructor({ api, config, onSelectFile, readOnly, optimizeImages }) {
     this.api = api;
     this.config = config;
     this.onSelectFile = onSelectFile;
@@ -30,6 +32,7 @@ export default class Ui {
         contentEditable: !this.readOnly,
       }),
     };
+    this.optimizeImages = config.optimizeImages;
 
     /**
      * Create base structure
@@ -156,6 +159,7 @@ export default class Ui {
      * Check for a source extension to compose element correctly: video tag for mp4, audio tag for mp3, img — for others
      */
     let tag = 'IMG';
+
     if (/\.mp4$/.test(url)) {
       tag = 'VIDEO';
     }
@@ -166,6 +170,22 @@ export default class Ui {
     const attributes = {
       src: url,
     };
+
+    if (this.optimizeImages) {
+      const srcSet = [640, 750, 828, 1080].map((width) => {
+        const resizedUrl = getResizedUrl(url, {
+          resize: {
+            width,
+            fit: 'cover',
+          },
+        });
+
+        return `${resizedUrl} ${width}w`;
+      }).join(', ');
+
+      attributes.srcset = srcSet;
+      attributes.sizes = '100vw';
+    }
 
     /**
      * We use eventName variable because IMG and VIDEO tags have different event to be called on source load
@@ -306,4 +326,46 @@ export const make = function make(tagName, classNames = null, attributes = {}) {
   }
 
   return el;
+};
+
+const cloudfrontHostname = 'https://d2obrjcl8a4u8e.cloudfront.net';
+const s3Hostname = 'ntmg-media.s3.us-west-1.amazonaws.com';
+const s3BucketName = 'ntmg-media';
+
+// type ImageEditRequest = {
+//   resize: {
+//     height?: number;
+//     width?: number;
+//     fit: 'cover' | 'contain' | 'fill' | 'inside' | 'outside';
+//   };
+// };
+
+const getResizedUrl = (originalImageUrl, imageEditRequest) => {
+  if (!originalImageUrl) {
+    return '';
+  }
+
+  if (!originalImageUrl.includes(s3Hostname)) {
+    return originalImageUrl;
+  }
+
+  const parts = originalImageUrl.split(s3Hostname + '/');
+
+  if (parts.length !== 2) {
+    return originalImageUrl;
+  }
+
+  const key = parts[1]
+    .split('/')
+    .map((pathPart) => decodeURIComponent(pathPart))
+    .join('/');
+  const imageRequest = {
+    bucket: s3BucketName,
+    key,
+    edits: imageEditRequest,
+  };
+
+  return `${cloudfrontHostname}/${base64FromByteArray(
+    Uint8Array.from(new TextEncoder().encode(JSON.stringify(imageRequest)))
+  )}`;
 };
