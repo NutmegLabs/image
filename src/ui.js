@@ -171,7 +171,7 @@ export default class Ui {
       src: url,
     };
 
-    if (this.optimizeImages) {
+    if (this.optimizeImages && tag === 'IMG') {
       const srcSet = [640, 750, 828, 1080].map((width) => {
         const resizedUrl = getResizedUrl(url, {
           resize: {
